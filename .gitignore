@@ -1,0 +1,16 @@
+.deps
+*.o
+/Makefile
+/config.h
+/config.log
+/config.status
+/info/Makefile
+/intformat.h
+/makeintformat
+/man/Makefile
+/semtest
+/src/Makefile
+/src/yams
+/src/yamst
+/stamp-h
+/stamp-h1
