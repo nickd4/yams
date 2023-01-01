@@ -289,10 +289,14 @@ static void raise_cp_exception(cpu_t * cpu, exception_t which, uint32_t cp_nro) 
 
 /* Select a CPU in round-robin manner */
 int select_cpu_for_irq() {
+#if 1
+ abort();
+#else
     static int current = -1;
 
     current = (current + 1) % hardware->num_cpus;
     return current;
+#endif
 }
 
 static void instr_decode(instr_t * instr) {
@@ -311,15 +315,20 @@ void disasm_instruction(uint32_t addr,
 			uint32_t instr_word, 
 			char *buf, 
 			int len) {
+#if 1
+ abort();
+#else
     instr_t instr;
     
     instr.instr = instr_word;
     instr_decode(&instr);
 
     disasm(addr, &instr, buf, len);
+#endif
 }
 
 static void invalidate_rmw_sequences(uint32_t vAddr) {
+#if 0
     int i;
 
     for(i = 0 ; i < hardware->num_cpus ; i++) {
@@ -327,6 +336,7 @@ static void invalidate_rmw_sequences(uint32_t vAddr) {
 	    hardware->cpus[i]->cp0->registers[LLAddr]=0xffffffff; /* invalid */
 	}
     }
+#endif
 }
 
 
@@ -443,6 +453,7 @@ static void cpu_next_cycle(cpu_t *cpu){
 	cpu->next_pc = cpu->registers[PC] + 4;
 	next_next_pc = cpu->next_pc + 4;
 
+#if 0
 	if (cpu->registers[PC] == hardware->breakpoint) {
 	    hardware->running = 0;
 	    printf("CPU %" PRId32 " hit breakpoint at #%.8" PRIx32
@@ -453,9 +464,10 @@ static void cpu_next_cycle(cpu_t *cpu){
                excepting instruction execution take two clock cycles. */
 	    return;
 	}
+#endif
     }
     
-    exc = mem_read(hardware->memory, cpu->registers[PC], &instr.instr, 4, 
+    exc = mem_read(NULL/*hardware->memory*/, cpu->registers[PC], &instr.instr, 4, 
                    cpu);
 
     if (exc != NoException) {
@@ -1318,7 +1330,7 @@ static void cpu_next_cycle(cpu_t *cpu){
     case OP_LB: /* 0x20 */
         temp32 = U_SIGN_EXTEND_16(instr.immediate) + 
             READ_REG(cpu, instr.rs);
-        exc = mem_read(hardware->memory, 
+        exc = mem_read(NULL/*hardware->memory*/, 
                        temp32, 
                        &temp8, 1, cpu);
         if (exc != NoException) {
@@ -1331,7 +1343,7 @@ static void cpu_next_cycle(cpu_t *cpu){
     case OP_LH: /* 0x21 */
         temp32 = U_SIGN_EXTEND_16(instr.immediate) + 
             READ_REG(cpu, instr.rs);
-        exc = mem_read(hardware->memory, 
+        exc = mem_read(NULL/*hardware->memory*/, 
                        temp32, 
                        &temp16, 2, cpu);
         if (exc != NoException) {
@@ -1346,7 +1358,7 @@ static void cpu_next_cycle(cpu_t *cpu){
 	    uint32_t vAddr = U_SIGN_EXTEND_16(instr.immediate) +
 		READ_REG(cpu, instr.rs);
 
-	    exc = mem_read(hardware->memory,
+	    exc = mem_read(NULL/*hardware->memory*/,
 			   (vAddr & 0xfffffffc),
 			   &temp32, 4, cpu);
 	    if(exc != NoException) {
@@ -1372,7 +1384,7 @@ static void cpu_next_cycle(cpu_t *cpu){
         {
             uint32_t vAddr = U_SIGN_EXTEND_16(instr.immediate) + 
                 READ_REG(cpu, instr.rs);
-            exc = mem_read(hardware->memory, 
+            exc = mem_read(NULL/*hardware->memory*/, 
                            vAddr, 
                            &temp32, 4, cpu);
             if (exc != NoException) {
@@ -1386,7 +1398,7 @@ static void cpu_next_cycle(cpu_t *cpu){
     case OP_LBU: /* 0x24 */
         temp32 = U_SIGN_EXTEND_16(instr.immediate) + 
             READ_REG(cpu, instr.rs);
-        exc = mem_read(hardware->memory, 
+        exc = mem_read(NULL/*hardware->memory*/, 
                        temp32, 
                        &temp8, 1, cpu);
         if (exc != NoException) {
@@ -1399,7 +1411,7 @@ static void cpu_next_cycle(cpu_t *cpu){
     case OP_LHU: /* 0x25 */
         temp32 = U_SIGN_EXTEND_16(instr.immediate) + 
             READ_REG(cpu, instr.rs);
-        exc = mem_read(hardware->memory, 
+        exc = mem_read(NULL/*hardware->memory*/, 
                        temp32, 
                        &temp16, 2, cpu);
         if (exc != NoException) {
@@ -1414,7 +1426,7 @@ static void cpu_next_cycle(cpu_t *cpu){
 	    uint32_t vAddr = U_SIGN_EXTEND_16(instr.immediate) +
 		READ_REG(cpu, instr.rs);
 
-	    exc = mem_read(hardware->memory,
+	    exc = mem_read(NULL/*hardware->memory*/,
 			   (vAddr & 0xfffffffc),
 			   &temp32, 4, cpu);
 	    if(exc != NoException) {
@@ -1440,7 +1452,7 @@ static void cpu_next_cycle(cpu_t *cpu){
 	    uint32_t vAddr = U_SIGN_EXTEND_16(instr.immediate) + 
 		READ_REG(cpu, instr.rs);
 	    temp8 = (uint8_t) READ_REG(cpu, instr.rt);
-	    exc = mem_write(hardware->memory,
+	    exc = mem_write(NULL/*hardware->memory*/,
 			    vAddr, 
 			    &temp8, 1, cpu);
 	    if (exc != NoException) {
@@ -1456,7 +1468,7 @@ static void cpu_next_cycle(cpu_t *cpu){
 		READ_REG(cpu, instr.rs);
 
 	    temp16 = (uint16_t) READ_REG(cpu, instr.rt);
-	    exc = mem_write(hardware->memory,
+	    exc = mem_write(NULL/*hardware->memory*/,
 			    vAddr,
 			    &temp16, 2, cpu);
 	    if (exc != NoException) {
@@ -1472,7 +1484,7 @@ static void cpu_next_cycle(cpu_t *cpu){
 		READ_REG(cpu, instr.rs);
 
 
-	    exc = mem_read(hardware->memory,
+	    exc = mem_read(NULL/*hardware->memory*/,
 			   (vAddr & 0xfffffffc),
 			   &temp32, 4, cpu);
 	    if(exc != NoException) {
@@ -1490,7 +1502,7 @@ static void cpu_next_cycle(cpu_t *cpu){
 		temp32 = temp32 | (READ_REG(cpu, instr.rt) >>
 				   ((vAddr & 3)*8));
 
-		exc = mem_write(hardware->memory,
+		exc = mem_write(NULL/*hardware->memory*/,
 				(vAddr & 0xfffffffc),
 				&temp32, 4, cpu);
 		if(exc != NoException) {
@@ -1507,7 +1519,7 @@ static void cpu_next_cycle(cpu_t *cpu){
 		READ_REG(cpu, instr.rs);
 
 	    temp32 = READ_REG(cpu, instr.rt);
-	    exc = mem_write(hardware->memory,
+	    exc = mem_write(NULL/*hardware->memory*/,
 			    vAddr,
 			    &temp32, 4, cpu);
 	    if (exc != NoException) {
@@ -1523,7 +1535,7 @@ static void cpu_next_cycle(cpu_t *cpu){
 		READ_REG(cpu, instr.rs);
 
 
-	    exc = mem_read(hardware->memory,
+	    exc = mem_read(NULL/*hardware->memory*/,
 			   (vAddr & 0xfffffffc),
 			   &temp32, 4, cpu);
 	    if(exc != NoException) {
@@ -1541,7 +1553,7 @@ static void cpu_next_cycle(cpu_t *cpu){
 		temp32 = temp32 | (READ_REG(cpu, instr.rt) <<
 				   (24-(vAddr & 3)*8));
 
-		exc = mem_write(hardware->memory,
+		exc = mem_write(NULL/*hardware->memory*/,
 				(vAddr & 0xfffffffc),
 				&temp32, 4, cpu);
 		if(exc != NoException) {
@@ -1559,7 +1571,7 @@ static void cpu_next_cycle(cpu_t *cpu){
 	{
 	    uint32_t vAddr = U_SIGN_EXTEND_16(instr.immediate) + 
 		READ_REG(cpu, instr.rs); 
-	    exc = mem_read(hardware->memory, 
+	    exc = mem_read(NULL/*hardware->memory*/, 
 			   vAddr, 
 			   &temp32, 4, cpu);
 	    if (exc != NoException) {
@@ -1600,7 +1612,7 @@ static void cpu_next_cycle(cpu_t *cpu){
 
 	    /* BEGIN phys_addr kludge */
 	    /* check for exceptions (no write done) */
-	    exc = mem_write(hardware->memory, vAddr, &kludge, 0, cpu);
+	    exc = mem_write(NULL/*hardware->memory*/, vAddr, &kludge, 0, cpu);
 	    if (exc != NoException) {
 		raise_address_exception(cpu, exc, vAddr);
 		return;
@@ -1614,7 +1626,7 @@ static void cpu_next_cycle(cpu_t *cpu){
 		/* LL/SC combination was atomic */
 
 		temp32 = READ_REG(cpu, instr.rt);
-		exc = mem_write(hardware->memory,
+		exc = mem_write(NULL/*hardware->memory*/,
 				vAddr, 
 				&temp32, 4, cpu);
 		if (exc != NoException) {
@@ -1656,14 +1668,18 @@ static void cpu_next_cycle(cpu_t *cpu){
     cpu->registers[PC] = cpu->next_pc;
     cpu->next_pc = next_next_pc;
 
+#if 0
     if (cpu->registers[PC] == hardware->breakpoint) {
 	hardware->running = 0;
 	printf("CPU %" PRId32 " hit breakpoint at #%.8" PRIx32 "\n",
 	       cpu->cpu_id, hardware->breakpoint);
     }
+#endif
 }
 
 void cpu_update(cpu_t *cpu) {
     cpu_next_cycle(cpu);
+#if 0
     cpu_timer_interrupt(cpu);
+#endif
 }
