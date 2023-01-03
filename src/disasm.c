@@ -468,9 +468,9 @@ void disasm(uint32_t addr, instr_t *instr, char *buf, int len) {
 	case OP_J:
 	case OP_JAL:
 	    {
-		uint32_t target = ((addr + 4) & 0xf0000000) 
-		    + (I_SIGN_EXTEND_16(instr->immediate) << 2);
-	    
+		uint32_t target = ((addr + 4) & 0xf0000000) |
+		    (instr->instr_index << 2);
+
 		snprintf(buf, len, "%s\t0x%.8" PRIx32, 
 			 op_codes[instr->opcode],
 			 target); 
@@ -663,6 +663,17 @@ int main(int argc, char **argv) {
     }
     printf("\n");
 
+    printf("opcodes 04\n");
+    for (int i = 0; i < 0x20; ++i) {
+      instr.instr = (1 << 26) | (3 << 21) | (i << 16);
+      instr_decode(&instr);
+
+      char buf[0x100];
+      disasm(0, &instr, buf, 0x100);
+      printf("%08x\t%s\n", instr.instr, buf);
+    }
+    printf("\n");
+
     printf("opcodes 40\n");
     for (int i = 0; i < 0x10; ++i) {
       instr.instr = (0x10 << 26) | (i << 21) | (1 << 16);
@@ -679,6 +690,17 @@ int main(int argc, char **argv) {
     for (int i = 0; i < 0x40; ++i) {
       instr.instr = (0x10 << 26) | (0x10 << 21) | (1 << 16) | (2 << 11) | (0 << 6) | i;
  
+      instr_decode(&instr);
+
+      char buf[0x100];
+      disasm(0, &instr, buf, 0x100);
+      printf("%08x\t%s\n", instr.instr, buf);
+    }
+    printf("\n");
+
+    printf("opcodes 70\n");
+    for (int i = 0; i < 0x40; ++i) {
+      instr.instr = (0x1c << 26) | (0 << 21) | (1 << 16) | (2 << 11) | (0 << 6) | i;
       instr_decode(&instr);
 
       char buf[0x100];
