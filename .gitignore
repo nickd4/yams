@@ -9,6 +9,7 @@
 /man/Makefile
 /semtest
 /src/Makefile
+/src/disasm
 /src/yams
 /src/yamst
 /stamp-h

@@ -20,6 +20,11 @@
    $Id: disasm.c,v 1.5 2005/06/05 15:00:19 jaatroko Exp $
 */
 
+#if 1 // Nick
+#include <fcntl.h>
+#include <unistd.h>
+#endif
+
 #include "cpu.h"
 #include "opcodes.h"
 #include "cpuregs.h"
@@ -513,3 +518,176 @@ void disasm(uint32_t addr, instr_t *instr, char *buf, int len) {
     }
 }
 
+#if 1 // Nick
+char *cpu_register_names [] = {
+    "zero",
+    "at",
+    "v0",
+    "v1",
+    "a0",
+    "a1",
+    "a2",
+    "a3",
+    "t0",
+    "t1",
+    "t2",
+    "t3",
+    "t4",
+    "t5",
+    "t6",
+    "t7",
+    "s0",
+    "s1",
+    "s2",
+    "s3",
+    "s4",
+    "s5",
+    "s6",
+    "s7",
+    "t8",
+    "t9",
+    "k0",
+    "k1",
+    "gp",
+    "sp",
+    "fp",
+    "ra",
+    "pc",
+    "hi",
+    "lo",
+    NULL
+};
+
+char *cp0_register_names[] = {
+    "Index",
+    "Random",
+    "EntLo0",
+    "EntLo1",
+    "Contxt",
+    "PgMask",
+    "Wired",
+    "CP0R7",
+    "BadVAd",
+    "Count",
+    "EntrHi",
+    "Compar",
+    "Status",
+    "Cause",
+    "EPC",
+    "PRId",
+    "Conf0",
+    "LLAddr",
+    "WtchLo",
+    "WtchHi",
+    "CP020",
+    "CP021",
+    "Conf1",
+    "Debug",
+    "DEPC",
+    "PrfCnt",
+    "ErrCtl",
+    "CacheE",
+    "CP0Lo",
+    "CP0Hi",
+    "ErrEPC",
+    "DESAVE",
+    NULL
+};
+
+static void instr_decode(instr_t * instr) {
+    instr->opcode = instr->instr >> 26;
+    instr->rs = (instr->instr & 0x03e00000) >> 21;
+    instr->rt = (instr->instr & 0x001f0000) >> 16;
+    instr->rd = (instr->instr & 0x0000f800) >> 11;
+    instr->sa = (instr->instr & 0x000007c0) >> 6;
+    instr->instr_index = (instr->instr & 0x03ffffff);
+    instr->immediate = (instr->instr & 0x0000ffff);
+    instr->function = instr->instr & 0x0000003f;
+}
+
+static uint32_t mem[0x400000]; // 16M
+
+int main(int argc, char **argv) {
+  instr_t instr;
+
+  if (argc >= 2) {
+    // command-line argument is .bin file to disassemble
+    int fd = open(argv[1], O_RDONLY);
+    if (fd == -1) {
+      perror(argv[1]);
+      exit(EXIT_FAILURE);
+    }
+
+    ssize_t result = read(fd, mem, 0x1000000); // maximum of 16M
+    if (result == (ssize_t)-1) {
+      perror("read()");
+      exit(EXIT_FAILURE);
+    }
+    int size = (int)result & ~3;
+
+    close(fd);
+
+    for (int pc = 0; pc < size; pc += 4) {
+      instr.instr = mem[pc >> 2];
+      instr_decode(&instr);
+
+      char buf[0x100];
+      disasm(pc, &instr, buf, 0x100);
+      if (memcmp(buf, "Invalid instr", 13) == 0)
+        snprintf(buf, 0x100, ".WORD\t0x%08x", instr.instr);
+      printf("%08x %08x\t%s\n", pc, instr.instr, buf);
+    } 
+  }
+  else {
+    // with no command-line argument, print opcode table
+    printf("opcodes\n");
+    for (int i = 0; i < 0x40; ++i) {
+      instr.instr = (i << 26) | (0 << 21) | (1 << 16);
+      instr_decode(&instr);
+
+      char buf[0x100];
+      disasm(0, &instr, buf, 0x100);
+      printf("%08x\t%s\n", instr.instr, buf);
+    }
+    printf("\n");
+
+    printf("opcodes 00\n");
+    for (int i = 0; i < 0x40; ++i) {
+      instr.instr = (0 << 26) | (0 << 21) | (1 << 16) | (2 << 11) | (0 << 6) | i;
+ 
+      instr_decode(&instr);
+
+      char buf[0x100];
+      disasm(0, &instr, buf, 0x100);
+      printf("%08x\t%s\n", instr.instr, buf);
+    }
+    printf("\n");
+
+    printf("opcodes 40\n");
+    for (int i = 0; i < 0x10; ++i) {
+      instr.instr = (0x10 << 26) | (i << 21) | (1 << 16);
+ 
+      instr_decode(&instr);
+
+      char buf[0x100];
+      disasm(0, &instr, buf, 0x100);
+      printf("%08x\t%s\n", instr.instr, buf);
+    }
+    printf("\n");
+
+    printf("opcodes 42\n");
+    for (int i = 0; i < 0x40; ++i) {
+      instr.instr = (0x10 << 26) | (0x10 << 21) | (1 << 16) | (2 << 11) | (0 << 6) | i;
+ 
+      instr_decode(&instr);
+
+      char buf[0x100];
+      disasm(0, &instr, buf, 0x100);
+      printf("%08x\t%s\n", instr.instr, buf);
+    }
+    printf("\n");
+  }
+
+  return 0;
+}
+#endif
